@@ -8,6 +8,12 @@ class FlashCard(models.Model):
         # Add other language codes as needed
     ]
 
+    DIFFICULTY_CHOICES = [
+        ('E', 'Easy'),
+        ('M', 'Medium'),
+        ('H', 'Hard'),
+    ]
+
     CERTAINTY_LEVELS = [
         (1, 'Very Low'),
         (2, 'Low'),
@@ -18,19 +24,23 @@ class FlashCard(models.Model):
 
     question = models.TextField()
     answer = models.TextField()
-    category = models.CharField(max_length=100)
-    source_language = models.CharField(
-        max_length=2,
-        choices=LANGUAGE_CHOICES,
-        default='ES'  # Default is Spanish
+    difficulty = models.CharField(
+        max_length=1,
+        choices=DIFFICULTY_CHOICES,
+        default='M'  # Default is Medium difficulty
     )
-    target_language = models.CharField(
-        max_length=2,
-        choices=LANGUAGE_CHOICES,
-        default='EN'  # Default is English
+    source_set = models.CharField(
+        max_length=100,
+        default="default_set",  # Set the default value for new records
+        help_text="The source set or deck for the flashcard"
     )
 
-    # New certainty field
+    priority_in_set = models.IntegerField(default=0, help_text="The priority of the card in the set (used for sorting)")
+    language = models.CharField(
+        max_length=2,
+        choices=LANGUAGE_CHOICES,
+        default='ES'  # Default to Spanish
+    )
     certainty = models.IntegerField(
         choices=CERTAINTY_LEVELS,
         default=3,  # Default to 'Medium' certainty level
@@ -41,7 +51,8 @@ class FlashCard(models.Model):
     last_reviewed = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.category} - {self.question[:50]} ({self.source_language}->{self.target_language}) - Certainty: {self.certainty}"
+        return f"{self.source_set} - {self.question[:50]} ({self.language}) - Certainty: {self.certainty}"
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['priority_in_set', '-created_at']  # Sort by priority_in_set first, then by created_at
+
